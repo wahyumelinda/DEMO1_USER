@@ -1,0 +1,133 @@
+function getAllData() {
+  try {
+    var ss = SpreadsheetApp.openById("1z5o3P6nxcYMRz23EYUnjkLJUAKpOIkpe7-YI11mt4Ps");
+    var sheet = ss.getSheetByName("ALL");
+
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ "error": "Sheet ALL tidak ditemukan" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var data = sheet.getDataRange().getDisplayValues(); // Ambil semua data
+    var formattedData = [];
+
+    if (data.length < 3) {  // Minimal harus ada header (2 baris) + 1 data
+      return ContentService.createTextOutput(JSON.stringify({ error: "Tidak ada data yang ditampilkan" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Ambil 2 baris pertama sebagai header
+    var headers1 = data[0];  // Baris pertama header
+    var headers2 = data[1];  // Baris kedua header
+    var headers = [];
+
+    // Pemetaan header lama ke nama yang baru
+    var headerMapping = {
+      "Pengerjaan Mulai": "Mulai",
+      "Pemakaian Sparepart Deskripsi": "Deskripsi"
+    };
+
+    for (var i = 0; i < headers1.length; i++) {
+      var header = headers1[i] + (headers2[i] ? " " + headers2[i] : "");  // Gabungkan header
+      header = header.trim();  // Bersihkan spasi ekstra
+      headers.push(headerMapping[header] || header); // Ganti header jika ada di mapping
+    }
+
+    // Mulai dari baris ke-2 karena baris 0-1 adalah header
+    for (var i = 2; i < data.length; i++) {
+      var rowObject = {};
+      for (var j = 0; j < headers.length; j++) {
+        rowObject[headers[j]] = data[i][j]; // Buat objek JSON sesuai header baru
+      }
+      formattedData.push(rowObject);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(formattedData))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "error": error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  try {
+    var action = e.parameter.action;
+    var ss = SpreadsheetApp.openById("1z5o3P6nxcYMRz23EYUnjkLJUAKpOIkpe7-YI11mt4Ps");
+    var sheet = ss.getSheetByName("SPK");
+
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ "error": "Sheet ALL not found" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action == "get_all_data") {
+      return getAllData(ss);
+    } else if (action == "get_data") {
+      return getData(sheet);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({ "error": "Invalid action" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "error": error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getData(sheet) {
+  try {
+    var data = sheet.getDataRange().getDisplayValues();
+    var formattedData = [];
+
+    if (data.length < 2) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "Tidak ada data yang ditampilkan" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var headers = data[0]; // Ambil baris pertama sebagai header
+    var timeZone = Session.getScriptTimeZone();
+
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var rowObject = {};
+
+      var id = parseInt(row[0]); // Pastikan ada ID sebelum diproses
+      if (!id) continue; 
+
+      for (var j = 0; j < headers.length; j++) {
+        var value = row[j];
+
+        // Jika kolom berisi tanggal, ubah formatnya
+        if (headers[j].toLowerCase().includes("tanggal") && value) {
+          var dateValue = new Date(value);
+          if (!isNaN(dateValue.getTime())) {
+            value = Utilities.formatDate(dateValue, timeZone, "dd-MMM-yy");
+          }
+        }
+
+        rowObject[headers[j]] = value;
+      }
+
+      formattedData.push(rowObject);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(formattedData))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "error": error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Konversi jam ke zona waktu Jakarta
+function convertToJakartaTime(timeString) {
+  var timeParts = timeString.split(":");
+  var date = new Date();
+  date.setHours(timeParts[0]);
+  date.setMinutes(timeParts[1]);
+  date.setSeconds(0);
+
+  return Utilities.formatDate(date, "GMT+7", "HH:mm");
+}
+
