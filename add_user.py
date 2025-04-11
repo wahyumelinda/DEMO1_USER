@@ -26,7 +26,7 @@ option = st.selectbox("📂 Pilih Data yang Ingin Dilihat:", ["Data Preventive",
 if option == "Data Preventive":
     response = requests.get(f"{API_URL}?action=get_all_data")
     expected_columns = [
-        "ID", "BU", "Line", "Produk", "Nomor Mesin", "Mesin", "Tanggal Pengerjaan",
+        "ID", "BU", "Line", "Produk", "Mesin", "Nomor Mesin", "Tanggal Pengerjaan",
         "Mulai", "Selesai", "Masalah", "Tindakan Perbaikan", "Deskripsi",
         "Quantity", "PIC", "Kondisi", "Alasan", "SPV", "Last Update SPV", 
         "Approve", "Reason", "SM", "Last Update SM"
