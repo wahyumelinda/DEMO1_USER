@@ -14,7 +14,7 @@ st.markdown(
         unsafe_allow_html=True
     )
 
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTyxQcbH8j9WU4z7wJ0kdyrZHW634jdRePF7O6G6mKum1sPYOnWB8vjQvWXsBINebK/exec"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXEaMn7Rm22ioZO_kzDF6lmyBoy-QxK0W0S_OFYHsJ-8WJj8iizQksJBtaZONEDV4ObQ/exec"
 
 # untuk overview data
 API_URL = "https://script.google.com/macros/s/AKfycbwa3o66ObBb656Iye9vZkBp2-M1LUJdHdL8RKCadDCnFDhyGombHV5B7-KvaY2XOD7w1g/exec"
@@ -34,7 +34,7 @@ if option == "Data Preventive":
 elif option == "Data SPK":
     response = requests.get(f"{API_URL}?action=get_data")
     expected_columns = [
-        "ID", "BU", "Line", "Produk", "Nomor Mesin", "Mesin",
+        "ID", "BU", "Line", "Produk", "Mesin", "Nomor Mesin",
         "Masalah", "Tindakan Perbaikan", "Tanggal Pengerjaan", "PIC", "Last Update"
     ]
 
@@ -177,8 +177,8 @@ if spk_data:
         "BU": selected_row["BU"],
         "Line": selected_row["Line"],
         "Produk": selected_row["Produk"],
-        "Nomor Mesin": selected_row["Nomor Mesin"],
         "Mesin": selected_row["Mesin"],
+        "Nomor Mesin": selected_row["Nomor Mesin"],
         "Masalah": selected_row["Masalah"],
         "Tanggal": tanggal_pengerjaan,
         "PIC": selected_row["PIC"]
@@ -245,8 +245,8 @@ if spk_data:
                     "BU": str(selected_row['BU']),
                     "Line": str(selected_row['Line']),
                     "Produk": str(selected_row['Produk']),
-                    "Nomor": str(selected_row['Nomor Mesin']),
                     "Mesin": str(selected_row['Mesin']),
+                    "Nomor": str(selected_row['Nomor Mesin']),
                     "Tanggal": str(tanggal_pengerjaan),
                     "Mulai": str(mulai.strftime("%H:%M")),
                     "Selesai": str(selesai.strftime("%H:%M")),
