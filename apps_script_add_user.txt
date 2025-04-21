@@ -115,9 +115,9 @@ function addData(ss, params) {
     Logger.log("Final Quantity Join: " + quantityJoin); 
 
     sheet.appendRow([
-      newID, params.BU, params.Line, params.Produk, params.Nomor, params.Mesin,
+      newID, params.BU, params.Line, params.Produk, params.Mesin, params.Nomor,
       formattedTanggal, mulai, selesai, params.Masalah,
-      params.Tindakan, deskripsiJoin, quantityJoin, params.PIC
+      params.Tindakan, deskripsiJoin, quantityJoin, params.PIC, "", "", "", "", "", "", "", "", params.Durasi
     ]);
 
     return successResponse({ "new_id": newID });
