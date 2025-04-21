@@ -249,66 +249,63 @@ if spk_data:
     submitted = st.button("Tambah Data")
 
     if submitted:
-        if selesai <= mulai:
-            st.error("Waktu selesai harus lebih besar dari waktu mulai.")
-        else:
-            mulai_str = mulai.strftime("%H:%M")
-            selesai_str = selesai.strftime("%H:%M")
+        mulai_str = mulai.strftime("%H:%M")
+        selesai_str = selesai.strftime("%H:%M")
 
-            quantities = edited_df['Quantity'].tolist() if selected_items else []
+        quantities = edited_df['Quantity'].tolist() if selected_items else []
 
-            if len(selected_items) == len(quantities):
-                data_to_send = {
-                    "action": "add_data",
-                    "ID_SPK": str(selected_id),  # Ubah ke string
-                    "BU": str(selected_row['BU']),
-                    "Line": str(selected_row['Line']),
-                    "Produk": str(selected_row['Produk']),
-                    "Mesin": str(selected_row['Mesin']),
-                    "Nomor": str(selected_row['Nomor Mesin']),
-                    "Tanggal": str(tanggal_pengerjaan),
-                    "Mulai": str(mulai.strftime("%H:%M")),
-                    "Selesai": str(selesai.strftime("%H:%M")),
-                    "Masalah": str(selected_row['Masalah']),
-                    "Tindakan": str(tindakan),
-                    "Deskripsi": ", ".join(map(str, selected_items)),  
-                    "Quantity": ", ".join(map(str, quantities)),  
-                    "PIC": str(selected_row['PIC']),
-                    "Durasi": total_hour_time.strftime("%H:%M")
+        if len(selected_items) == len(quantities):
+            data_to_send = {
+                "action": "add_data",
+                "ID_SPK": str(selected_id),  # Ubah ke string
+                "BU": str(selected_row['BU']),
+                "Line": str(selected_row['Line']),
+                "Produk": str(selected_row['Produk']),
+                "Mesin": str(selected_row['Mesin']),
+                "Nomor": str(selected_row['Nomor Mesin']),
+                "Tanggal": str(tanggal_pengerjaan),
+                "Mulai": str(mulai.strftime("%H:%M")),
+                "Selesai": str(selesai.strftime("%H:%M")),
+                "Masalah": str(selected_row['Masalah']),
+                "Tindakan": str(tindakan),
+                "Deskripsi": ", ".join(map(str, selected_items)),  
+                "Quantity": ", ".join(map(str, quantities)),  
+                "PIC": str(selected_row['PIC']),
+                "Durasi": total_hour_time.strftime("%H:%M")
+            }
+
+            st.subheader("🔍 **Overview Data yang Akan Dikirim**")
+            df_preview = pd.DataFrame([data_to_send])
+            st.dataframe(df_preview, use_container_width=True)
+            
+            response = add_data_to_all(data_to_send)
+            if response.get("status") == "success":
+                st.toast("✅ Data berhasil ditambahkan ke Sheet ALL!")
+                st.session_state.show_confirmation = False  
+                st.rerun()
+            else:
+                st.error(f"❌ Gagal menambahkan data: {response.get('error', 'Tidak diketahui')}")
+
+            # Tambahkan data sparepart ke Sheet SPAREPART
+            for item, qty in zip(selected_items, quantities):
+                uom_value = filtered_db.loc[filtered_db['Deskripsi'] == item, 'UOM'].values
+                uom_final = uom_value[0] if len(uom_value) > 0 else "UNKNOWN"
+
+                sparepart_data = {
+                    "action": "add_data_to_sparepart",
+                    "ID_SPK": str(selected_id),
+                    "Deskripsi": str(item),
+                    "Quantity": str(qty),
+                    "UOM": filtered_db.loc[filtered_db['Deskripsi'] == item, 'UOM'].values[0] if not filtered_db.empty else "UNKNOWN"
                 }
 
-                st.subheader("🔍 **Overview Data yang Akan Dikirim**")
-                df_preview = pd.DataFrame([data_to_send])
-                st.dataframe(df_preview, use_container_width=True)
-                
-                response = add_data_to_all(data_to_send)
-                if response.get("status") == "success":
-                    st.toast("✅ Data berhasil ditambahkan ke Sheet ALL!")
-                    st.session_state.show_confirmation = False  
-                    st.rerun()
+                sparepart_response = add_data_to_sparepart(sparepart_data)
+                if sparepart_response.get("status") == "success":
+                    st.success(f"Data sparepart '{item}' berhasil ditambahkan! ✅")
                 else:
-                    st.error(f"❌ Gagal menambahkan data: {response.get('error', 'Tidak diketahui')}")
+                    st.error(f"Gagal menambahkan '{item}': {sparepart_response.get('error', 'Tidak diketahui')}")
 
-                # Tambahkan data sparepart ke Sheet SPAREPART
-                for item, qty in zip(selected_items, quantities):
-                    uom_value = filtered_db.loc[filtered_db['Deskripsi'] == item, 'UOM'].values
-                    uom_final = uom_value[0] if len(uom_value) > 0 else "UNKNOWN"
-
-                    sparepart_data = {
-                        "action": "add_data_to_sparepart",
-                        "ID_SPK": str(selected_id),
-                        "Deskripsi": str(item),
-                        "Quantity": str(qty),
-                        "UOM": filtered_db.loc[filtered_db['Deskripsi'] == item, 'UOM'].values[0] if not filtered_db.empty else "UNKNOWN"
-                    }
-
-                    sparepart_response = add_data_to_sparepart(sparepart_data)
-                    if sparepart_response.get("status") == "success":
-                        st.success(f"Data sparepart '{item}' berhasil ditambahkan! ✅")
-                    else:
-                        st.error(f"Gagal menambahkan '{item}': {sparepart_response.get('error', 'Tidak diketahui')}")
-
-            else:
-                st.error("Jumlah deskripsi dan kuantitas tidak sesuai!")
+        else:
+            st.error("Jumlah deskripsi dan kuantitas tidak sesuai!")
 else:
     st.warning("⚠ Tidak ada data SPK yang tersedia.")
