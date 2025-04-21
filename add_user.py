@@ -1,7 +1,9 @@
 import streamlit as st
 import requests
 import pandas as pd
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
+import time as tm
+from datetime import date
 
 st.set_page_config(page_title="Tambah Data ke Sheet ALL", page_icon="📝", layout="wide")
 
@@ -14,7 +16,7 @@ st.markdown(
         unsafe_allow_html=True
     )
 
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXEaMn7Rm22ioZO_kzDF6lmyBoy-QxK0W0S_OFYHsJ-8WJj8iizQksJBtaZONEDV4ObQ/exec"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUXuf5OChjuOGrDm9i2Jt-K8C2xo5BjuWQnCGO5pwcdHxt6hHhRW3G7TXbLo0VlHYh1A/exec"
 
 # untuk overview data
 API_URL = "https://script.google.com/macros/s/AKfycbwa3o66ObBb656Iye9vZkBp2-M1LUJdHdL8RKCadDCnFDhyGombHV5B7-KvaY2XOD7w1g/exec"
@@ -184,13 +186,30 @@ if spk_data:
         "PIC": selected_row["PIC"]
     }])
 
-    # Tampilkan sebagai tabel
+    # tampilkan sebagai tabel
     st.markdown("#### Data dari SPK")
     st.dataframe(spk_info, use_container_width=True) 
 
     st.markdown("#### Tambahkan Data ke Sheet ALL")
     mulai = st.time_input("Jam Mulai", value=time(0, 0))
     selesai = st.time_input("Jam Selesai", value=time(0, 0))
+    
+    # hitung durasi pengerjaan
+    start_datetime = datetime.combine(datetime.today(), mulai)
+    stop_datetime = datetime.combine(datetime.today(), selesai)
+    
+    if stop_datetime < start_datetime:
+        stop_datetime += timedelta(days=1)
+    
+    total_durasi = stop_datetime - start_datetime
+    
+    # tampilkan durasi pengerjaan
+    if total_durasi == timedelta(0):
+        st.warning("⚠ Pilih Jam Mulai dan Jam Selesai yang valid.")
+    else:
+        total_hour_time = (datetime(1900, 1, 1) + total_durasi).time()
+        st.info(f"⏱ Total Durasi: {total_hour_time.strftime('%H:%M')} jam")
+        
     tindakan = st.text_area("Tindakan Perbaikan")
 
     bu_filter = selected_row['BU']
@@ -254,7 +273,8 @@ if spk_data:
                     "Tindakan": str(tindakan),
                     "Deskripsi": ", ".join(map(str, selected_items)),  
                     "Quantity": ", ".join(map(str, quantities)),  
-                    "PIC": str(selected_row['PIC'])
+                    "PIC": str(selected_row['PIC']),
+                    "Durasi": total_hour_time.strftime("%H:%M")
                 }
 
                 st.subheader("🔍 **Overview Data yang Akan Dikirim**")
@@ -292,4 +312,3 @@ if spk_data:
                 st.error("Jumlah deskripsi dan kuantitas tidak sesuai!")
 else:
     st.warning("⚠ Tidak ada data SPK yang tersedia.")
-
